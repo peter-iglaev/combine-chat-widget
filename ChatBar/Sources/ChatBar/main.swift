@@ -34,11 +34,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let menu = NSMenu()
         openItem = NSMenuItem(title: "", action: #selector(showPanel), keyEquivalent: "")
         menu.addItem(openItem)
-        menu.addItem(NSMenuItem(title: "Обновить список", action: #selector(refresh), keyEquivalent: "r"))
-        menu.addItem(NSMenuItem(title: "Перезапустить ChatGPT с портом", action: #selector(relaunchChatGPT), keyEquivalent: ""))
+        menu.addItem(NSMenuItem(title: "Relaunch ChatGPT with Debugging Port", action: #selector(relaunchChatGPT), keyEquivalent: ""))
         menu.addItem(.separator())
-        menu.addItem(NSMenuItem(title: "Настройки…", action: #selector(showSettings), keyEquivalent: ","))
-        menu.addItem(NSMenuItem(title: "Выйти из ChatBar", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
+        menu.addItem(NSMenuItem(title: "Settings…", action: #selector(showSettings), keyEquivalent: ","))
+        menu.addItem(NSMenuItem(title: "Quit ChatBar", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
         for item in menu.items { item.target = item.action == #selector(NSApplication.terminate(_:)) ? NSApp : self }
         statusItem.menu = menu
         updateMenuTitle(settings.shortcut)
@@ -47,19 +46,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func updateMenuTitle(_ s: Shortcut) {
-        openItem.title = "Открыть список чатов (\(s.display))"
+        openItem.title = "Open Chat List (\(s.display))"
     }
 
     @objc private func showPanel() { panel.show() }
-
-    @objc private func refresh() { store.refresh() }
 
     @objc private func relaunchChatGPT() { ChatGPTControl.shared.relaunchWithPort() }
 
     @objc private func showSettings() {
         if settingsWindow == nil {
             let w = NSWindow(contentViewController: NSHostingController(rootView: SettingsView(model: settings)))
-            w.title = "ChatBar — настройки"
+            w.title = "ChatBar Settings"
             w.styleMask = [.titled, .closable]
             w.isReleasedWhenClosed = false
             settingsWindow = w

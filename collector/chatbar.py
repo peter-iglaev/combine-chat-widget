@@ -52,7 +52,7 @@ def item(source, id_, title, updated, url=None, gpt_id=None, app="claude"):
     return {
         "id": f"{source}:{id_}",
         "source": source,
-        "title": (title or "").strip() or "Без названия",
+        "title": (title or "").strip() or "Untitled",
         "updated": int(updated or 0),
         "url": url,
         "gptId": gpt_id,

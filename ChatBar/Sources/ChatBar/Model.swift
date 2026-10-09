@@ -112,7 +112,7 @@ final class ChatStore: ObservableObject {
             let r = await runCollector(["list"])
             isLoading = false
             guard r.status == 0, let list = try? JSONDecoder().decode([ChatItem].self, from: r.stdout) else {
-                lastError = r.stderr.isEmpty ? "Сборщик завершился с кодом \(r.status)" : r.stderr
+                lastError = r.stderr.isEmpty ? "Collector exited with code \(r.status)" : r.stderr
                 return
             }
             lastError = nil

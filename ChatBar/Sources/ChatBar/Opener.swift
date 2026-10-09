@@ -22,7 +22,7 @@ enum Opener {
             case 3:
                 if ChatGPTControl.confirmRelaunch() { openChatGPT(id, relaunch: true) }
             default:
-                ChatGPTControl.showError("Не удалось открыть чат ChatGPT", r.stderr)
+                ChatGPTControl.showError("Couldn't open the ChatGPT chat", r.stderr)
             }
         }
     }

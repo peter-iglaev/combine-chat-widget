@@ -28,7 +28,7 @@ struct PanelView: View {
         VStack(spacing: 0) {
             HStack(spacing: 10) {
                 Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
-                TextField("Найти чат…", text: $state.query)
+                TextField("Search chats…", text: $state.query)
                     .textFieldStyle(.plain)
                     .font(.system(size: 20))
                     .focused($searchFocused)
@@ -40,7 +40,7 @@ struct PanelView: View {
             Divider()
 
             if results.isEmpty {
-                Text(store.items.isEmpty ? "Загружаю чаты…" : "Ничего не найдено")
+                Text(store.items.isEmpty ? "Loading chats…" : "No matches")
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
@@ -81,7 +81,7 @@ struct ChatRow: View {
 
     private static let relative: RelativeDateTimeFormatter = {
         let f = RelativeDateTimeFormatter()
-        f.locale = Locale(identifier: "ru_RU")
+        f.locale = Locale(identifier: "en_US")
         f.unitsStyle = .short
         return f
     }()

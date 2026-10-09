@@ -9,10 +9,10 @@ enum ChatGPTStatus: Equatable {
 
     var label: String {
         switch self {
-        case .checking: return "Проверяю…"
-        case .withPort: return "Запущен с портом: чаты открываются по ID"
-        case .withoutPort: return "Запущен без порта: обычные чаты ChatGPT не откроются"
-        case .notRunning: return "Не запущен"
+        case .checking: return "Checking…"
+        case .withPort: return "Running with port: chats open by ID"
+        case .withoutPort: return "Running without port: regular ChatGPT chats won't open"
+        case .notRunning: return "Not running"
         }
     }
 
@@ -62,17 +62,17 @@ final class ChatGPTControl: ObservableObject {
             let r = await runCollector(["launch-gpt"])
             busy = false
             status = await currentStatus()
-            if r.status != 0 { Self.showError("Не удалось запустить ChatGPT с портом", r.stderr) }
+            if r.status != 0 { Self.showError("Couldn't launch ChatGPT with the debugging port", r.stderr) }
         }
     }
 
     static func confirmRelaunch() -> Bool {
         let alert = NSAlert()
-        alert.messageText = "Перезапустить ChatGPT?"
-        alert.informativeText = "ChatGPT будет закрыт и открыт заново с отладочным портом, "
-            + "чтобы ChatBar мог открывать чаты по ID. Задачи Codex, которые сейчас выполняются, прервутся."
-        alert.addButton(withTitle: "Перезапустить")
-        alert.addButton(withTitle: "Отмена")
+        alert.messageText = "Relaunch ChatGPT?"
+        alert.informativeText = "ChatGPT will quit and reopen with the debugging port "
+            + "so ChatBar can open chats by ID. Codex tasks that are currently running will be interrupted."
+        alert.addButton(withTitle: "Relaunch")
+        alert.addButton(withTitle: "Cancel")
         NSApp.activate(ignoringOtherApps: true)
         return alert.runModal() == .alertFirstButtonReturn
     }
@@ -80,7 +80,7 @@ final class ChatGPTControl: ObservableObject {
     static func showError(_ title: String, _ text: String) {
         let alert = NSAlert()
         alert.messageText = title
-        alert.informativeText = text.isEmpty ? "Неизвестная ошибка" : text
+        alert.informativeText = text.isEmpty ? "Unknown error" : text
         NSApp.activate(ignoringOtherApps: true)
         alert.runModal()
     }

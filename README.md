@@ -28,11 +28,13 @@ A 💬 icon appears in the menu bar. Press **⌘Y**.
 | Enter | Open the chat in its app |
 | Esc | Close |
 
+The list refreshes every time the panel opens.
+
 ### Settings
 
-Menu bar icon → **Настройки…** (Settings):
+Menu bar icon → **Settings…**:
 
-- **Hotkey**: click the shortcut button and press a new combination (needs ⌘, ⌥ or ⌃). **Сбросить** restores ⌘Y.
+- **Hotkey**: click the shortcut button and press a new combination (needs ⌘, ⌥ or ⌃). **Reset** restores ⌘Y.
 - **Launch at login** toggle.
 - **ChatGPT**: shows whether ChatGPT runs with the debugging port and lets you (re)launch it with the port (see below).
 
@@ -50,7 +52,7 @@ Menu bar icon → **Настройки…** (Settings):
 
 ChatGPT.app has no deep link for regular chats (only for Codex and Work threads), and it keeps the current chat list in memory only. To open ChatGPT chats by id and see the up-to-date list, ChatGPT.app must run with a local debugging port (`127.0.0.1:9333`).
 
-- **Settings → ChatGPT → Перезапустить ChatGPT с портом**, or the same item in the menu bar menu, quits ChatGPT and relaunches it with the port. Running Codex tasks in ChatGPT are interrupted.
+- **Settings → ChatGPT → Relaunch ChatGPT with Port**, or **Relaunch ChatGPT with Debugging Port** in the menu bar menu, quits ChatGPT and relaunches it with the port. Running Codex tasks in ChatGPT are interrupted.
 - When you open a ChatGPT chat while the port is off, ChatBar offers the relaunch.
 - If you start ChatGPT normally (Dock, Spotlight), Codex and Work still open, but ChatGPT chats won't open by id and the list falls back to an older cache.
 
@@ -83,6 +85,34 @@ The collector can be run on its own:
 APP=build/ChatBar.app/Contents/Resources
 $APP/python/bin/python3 -I -B $APP/collector/chatbar.py list
 ```
+
+## Contributing
+
+Issues and pull requests are welcome.
+
+**Reporting a bug.** Include your macOS version, the ChatBar version (from the DMG name), the versions of the affected apps (Claude, ChatGPT), and what you expected versus what happened. If a source stopped showing chats, run the collector on its own (see [Build from source](#build-from-source)) and attach its stderr. Strip chat titles you don't want to share.
+
+**Making a change.**
+
+1. Fork the repo and create a branch from `main`.
+2. Build with `./scripts/build.sh` and test the app from `build/ChatBar.app`. Check the sources your change touches and that the hotkey, search and opening a chat still work.
+3. Keep the pull request focused on one change and describe how you tested it.
+
+**Project layout.**
+
+- `ChatBar/` is the Swift menu bar app: panel UI, hotkey, settings, opening chats.
+- `collector/chatbar.py` reads the apps' local data and prints the chat list as JSON. A new source usually means a new reader here plus a `ChatSource` case and an opener in Swift.
+- `scripts/` builds the app bundle and the DMG; `.github/workflows/release.yml` publishes releases.
+
+**Ground rules.**
+
+- **No network access.** ChatBar reads only local files and `127.0.0.1`. Changes that add outbound requests, telemetry or auto-update won't be merged.
+- **Read-only.** Never write to other apps' data directories.
+- **Pinned dependencies.** New Python packages go into `collector/requirements.txt` pinned to an exact version or commit; downloaded build inputs are verified by SHA-256.
+- **English UI.** All user-facing strings, code comments and docs are in English.
+- Match the style of the surrounding code; keep comments for the non-obvious "why".
+
+Releases are cut by the maintainer by pushing a `v*` tag.
 
 ## Limitations
 

@@ -21,14 +21,14 @@ final class SettingsModel: ObservableObject {
             guard let self else { return e }
             if e.keyCode == 53 { self.stopRecording(); return nil } // Esc cancels
             guard let s = Shortcut(event: e) else {
-                self.error = "Нужен хотя бы один модификатор: ⌘, ⌥ или ⌃"
+                self.error = "Use at least one modifier: ⌘, ⌥ or ⌃"
                 return nil
             }
             if self.onShortcutChange?(s) ?? false {
                 self.shortcut = s
                 s.save()
             } else {
-                self.error = "Сочетание \(s.display) занято другим приложением"
+                self.error = "\(s.display) is already used by another app"
             }
             self.stopRecording()
             return nil
@@ -54,7 +54,7 @@ final class SettingsModel: ObservableObject {
         do {
             if on { try SMAppService.mainApp.register() } else { try SMAppService.mainApp.unregister() }
         } catch {
-            self.error = "Автозапуск: \(error.localizedDescription)"
+            self.error = "Launch at login: \(error.localizedDescription)"
         }
         launchAtLogin = SMAppService.mainApp.status == .enabled
     }
@@ -66,17 +66,17 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
-            Section("Хоткей") {
-                LabeledContent("Открыть список чатов") {
+            Section("Hotkey") {
+                LabeledContent("Open chat list") {
                     HStack {
-                        Button(model.recording ? "Нажмите сочетание…" : model.shortcut.display) {
+                        Button(model.recording ? "Press shortcut…" : model.shortcut.display) {
                             model.recording ? model.stopRecording() : model.startRecording()
                         }
                         .frame(minWidth: 150)
-                        Button("Сбросить (⌘Y)") { model.resetToDefault() }
+                        Button("Reset (⌘Y)") { model.resetToDefault() }
                     }
                 }
-                Toggle("Запускать ChatBar при входе в систему", isOn: Binding(
+                Toggle("Launch ChatBar at login", isOn: Binding(
                     get: { model.launchAtLogin },
                     set: { model.setLaunchAtLogin($0) }
                 ))
@@ -86,26 +86,26 @@ struct SettingsView: View {
             }
 
             Section {
-                LabeledContent("Статус") {
+                LabeledContent("Status") {
                     HStack(spacing: 6) {
                         Circle().fill(Color(nsColor: chatgpt.status.color)).frame(width: 8, height: 8)
                         Text(chatgpt.status.label)
                     }
                 }
                 HStack {
-                    Button(chatgpt.status == .notRunning ? "Запустить ChatGPT с портом" : "Перезапустить ChatGPT с портом") {
+                    Button(chatgpt.status == .notRunning ? "Launch ChatGPT with Port" : "Relaunch ChatGPT with Port") {
                         chatgpt.relaunchWithPort()
                     }
                     .disabled(chatgpt.busy || chatgpt.status == .withPort)
                     if chatgpt.busy { ProgressView().controlSize(.small) }
                     Spacer()
-                    Button("Обновить статус") { chatgpt.refreshStatus() }
+                    Button("Check Status") { chatgpt.refreshStatus() }
                 }
             } header: {
                 Text("ChatGPT")
             } footer: {
-                Text("Обычные чаты ChatGPT открываются по ID только когда ChatGPT запущен с отладочным портом "
-                     + "(127.0.0.1:9333). Codex и Work работают и без него.")
+                Text("Regular ChatGPT chats open by ID only when ChatGPT runs with the debugging port "
+                     + "(127.0.0.1:9333). Codex and Work threads open without it.")
                     .font(.caption).foregroundStyle(.secondary)
             }
         }
