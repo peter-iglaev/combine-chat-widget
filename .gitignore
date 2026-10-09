@@ -1,0 +1,4 @@
+.venv/
+build/
+ChatBar/.build/
+__pycache__/
