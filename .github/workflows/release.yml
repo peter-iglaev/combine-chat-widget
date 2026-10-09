@@ -1,0 +1,45 @@
+name: Release
+
+# Builds ChatBar.dmg and attaches it to a GitHub release when a v* tag is pushed.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  dmg:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set version
+        run: |
+          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
+            echo "CHATBAR_VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+          else
+            echo "CHATBAR_VERSION=0.0.0-dev" >> "$GITHUB_ENV"
+          fi
+
+      - name: Build app
+        run: ./scripts/build.sh
+
+      - name: Build DMG
+        run: ./scripts/make-dmg.sh
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ChatBar-${{ env.CHATBAR_VERSION }}
+          path: build/ChatBar-*.dmg
+
+      - name: Publish release
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" build/ChatBar-*.dmg \
+            --title "ChatBar $GITHUB_REF_NAME" \
+            --notes "Unsigned build for Apple Silicon. See README for first-launch instructions."

@@ -1,7 +1,7 @@
 import AppKit
 import Carbon.HIToolbox
 
-/// Сочетание клавиш в формате Carbon: keyCode + модификаторы.
+/// A keyboard shortcut in Carbon terms: key code + modifier mask.
 struct Shortcut: Codable, Equatable {
     var keyCode: UInt32
     var modifiers: UInt32
@@ -24,7 +24,7 @@ struct Shortcut: Codable, Equatable {
         self.keyLabel = keyLabel
     }
 
-    /// nil, если в событии нет ни ⌘, ни ⌥, ни ⌃: одиночные клавиши как глобальный хоткей не берём.
+    /// Returns nil unless ⌘, ⌥ or ⌃ is held: bare keys are not accepted as a global hotkey.
     init?(event: NSEvent) {
         let f = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
         var m: UInt32 = 0
@@ -56,7 +56,7 @@ struct Shortcut: Codable, Equatable {
     }
 }
 
-/// Глобальный хоткей через Carbon RegisterEventHotKey: не требует права Accessibility.
+/// Global hotkey via Carbon RegisterEventHotKey: needs no Accessibility permission.
 final class HotKeyManager {
     private var ref: EventHotKeyRef?
     private var handler: EventHandlerRef?

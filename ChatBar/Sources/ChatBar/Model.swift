@@ -39,14 +39,14 @@ struct ChatItem: Codable, Identifiable, Hashable {
     var updatedDate: Date { Date(timeIntervalSince1970: TimeInterval(updated) / 1000) }
 }
 
-/// Пути к сборщику берутся из Info.plist, их прописывает scripts/build.sh.
+/// The collector and its Python interpreter are embedded in the app bundle by scripts/build.sh.
 enum Paths {
     static var python: String {
-        Bundle.main.object(forInfoDictionaryKey: "ChatBarPython") as? String ?? "/usr/bin/python3"
+        Bundle.main.resourceURL!.appendingPathComponent("python/bin/python3").path
     }
 
     static var collector: String {
-        Bundle.main.object(forInfoDictionaryKey: "ChatBarCollector") as? String ?? ""
+        Bundle.main.resourceURL!.appendingPathComponent("collector/chatbar.py").path
     }
 
     static var cacheFile: URL {
@@ -68,7 +68,7 @@ func runCollector(_ args: [String]) async -> ProcessResult {
     await withCheckedContinuation { cont in
         let p = Process()
         p.executableURL = URL(fileURLWithPath: Paths.python)
-        p.arguments = ["-I", Paths.collector] + args
+        p.arguments = ["-I", "-B", Paths.collector] + args  // -B: never write .pyc into the signed bundle
         let out = Pipe(), err = Pipe()
         p.standardOutput = out
         p.standardError = err
@@ -78,7 +78,7 @@ func runCollector(_ args: [String]) async -> ProcessResult {
             cont.resume(returning: ProcessResult(status: -1, stdout: Data(), stderr: "\(error)"))
             return
         }
-        // Читаем пайпы до завершения процесса: иначе вывод больше 64 КБ заблокирует сборщик.
+        // Drain the pipes while the process runs: output over 64 KB would otherwise block the collector.
         DispatchQueue.global(qos: .userInitiated).async {
             var e = Data()
             let errReader = DispatchQueue(label: "chatbar.stderr")
@@ -117,7 +117,7 @@ final class ChatStore: ObservableObject {
             }
             lastError = nil
             items = list
-            // В кэше названия чатов: доступ только владельцу.
+            // The cache contains chat titles: owner-only access.
             try? r.stdout.write(to: Paths.cacheFile)
             try? FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: Paths.cacheFile.path)
         }

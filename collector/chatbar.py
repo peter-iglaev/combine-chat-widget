@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
-"""Сборщик списка чатов для ChatBar. Читает только локальные данные приложений.
+"""Chat list collector for ChatBar. Reads local app data only; makes no network requests.
 
-Команды:
-  list                     -> JSON-массив чатов в stdout
-  launch-gpt               -> (пере)запускает ChatGPT.app с отладочным портом
-  open-gpt <id> [--relaunch]
-      Открывает чат ChatGPT в ChatGPT.app через отладочный порт (CDP).
-      Код выхода 3: ChatGPT.app запущен без порта, нужен перезапуск (--relaunch).
+Commands:
+  list                        print a JSON array of chats to stdout
+  launch-gpt                  (re)launch ChatGPT.app with the debugging port
+  open-gpt <id> [--relaunch]  open a ChatGPT chat in ChatGPT.app via the debugging port (CDP)
+                              exit code 3: ChatGPT.app runs without the port, relaunch needed
 """
 import io
 import json
@@ -41,7 +40,7 @@ def log(msg):
 def iso_to_ms(s):
     if not s:
         return 0
-    if isinstance(s, (int, float)):  # секунды или миллисекунды
+    if isinstance(s, (int, float)):  # seconds or milliseconds
         return int(s * 1000 if s < 1e12 else s)
     try:
         return int(datetime.fromisoformat(s.replace("Z", "+00:00")).timestamp() * 1000)
@@ -61,7 +60,7 @@ def item(source, id_, title, updated, url=None, gpt_id=None, app="claude"):
     }
 
 
-# ---------- Codex и ChatGPT Work ----------
+# ---------- Codex and ChatGPT Work ----------
 
 def collect_codex():
     if not CODEX_STATE_DB.exists():
@@ -87,7 +86,7 @@ def collect_codex():
     return out
 
 
-# ---------- Claude Code и Cowork (локальные сессии) ----------
+# ---------- Claude Code and Cowork (local sessions) ----------
 
 def collect_claude_local():
     out = []
@@ -113,7 +112,7 @@ def collect_claude_local():
     return out
 
 
-# ---------- Облачные чаты Claude (кэш IndexedDB) ----------
+# ---------- Claude cloud chats (IndexedDB cache) ----------
 
 def _read_claude_blob(path):
     from ccl_chromium_reader.serialization_formats import ccl_blink_value_deserializer as blink
@@ -121,7 +120,7 @@ def _read_claude_blob(path):
     from ccl_simplesnappy import ccl_simplesnappy as snappy
 
     data = path.read_bytes()
-    if data[:3] == b"\xff\x11\x02":  # значение сжато snappy
+    if data[:3] == b"\xff\x11\x02":  # value is snappy-compressed
         data = snappy.decompress(io.BytesIO(data[3:]))
     for off in range(6):
         try:
@@ -142,7 +141,7 @@ def _content_text(content):
 
 
 def _first_user_text(tree):
-    """Первая реплика пользователя в облачной сессии Code/Cowork: у них нет заголовка."""
+    """First user message of a cloud Code/Cowork session, used as its title (they have none)."""
     for ev in tree.get("messages") or tree.get("events") or []:
         if not isinstance(ev, dict):
             continue
@@ -211,7 +210,7 @@ def collect_claude_cloud():
     return out
 
 
-# ---------- Обычные чаты ChatGPT (кэш Local Storage) ----------
+# ---------- ChatGPT chats (Local Storage cache + live sidebar) ----------
 
 def collect_chatgpt():
     if not GPT_LOCAL_STORAGE.exists():
@@ -242,7 +241,7 @@ def collect_chatgpt():
         d = json.loads(latest["codex.chatgpt-pinned-conversations"][1])
         convs.extend(x.get("item", {}) for x in d.get("items", []) if x.get("item_type") == "conversation")
 
-    # Кэш Local Storage приложение обновляет редко, поэтому сверху кладём живой сайдбар.
+    # The app rarely refreshes its Local Storage cache, so overlay the live sidebar on top.
     convs.extend(_chatgpt_sidebar_live())
 
     out = {}
@@ -254,7 +253,7 @@ def collect_chatgpt():
     return list(out.values())
 
 
-# Берём объекты conversation из React-пропсов строк сайдбара открытого окна ChatGPT.
+# Reads `conversation` objects from the React props of sidebar rows in the open ChatGPT window.
 SIDEBAR_JS = r"""
 (() => {
   const out = [];
@@ -297,7 +296,7 @@ def cmd_list():
     json.dump(items, sys.stdout, ensure_ascii=False)
 
 
-# ---------- Открытие чата ChatGPT через CDP ----------
+# ---------- Opening ChatGPT chats via CDP ----------
 
 def cdp_get(path):
     with urllib.request.urlopen(f"http://127.0.0.1:{CDP_PORT}{path}", timeout=1) as r:
@@ -348,7 +347,7 @@ def launch_chatgpt_with_port():
         if page:
             try:
                 if cdp_eval(page, "document.readyState === 'complete' && document.body.innerText.length > 50"):
-                    time.sleep(1.5)  # даём приложению подписаться на сообщения
+                    time.sleep(1.5)  # let the app subscribe to window messages
                     return page
             except Exception:
                 pass
@@ -363,7 +362,7 @@ def cmd_open_gpt(conv_id, relaunch):
             return 3
         page = launch_chatgpt_with_port()
         if page is None:
-            log("ChatGPT.app не поднял отладочный порт")
+            log("ChatGPT.app did not open the debugging port")
             return 1
     path = "/c/" + conv_id
     cdp_eval(page, 'window.postMessage({type:"navigate-to-route",path:%s},"*"); true' % json.dumps(path))
@@ -377,7 +376,7 @@ def main(argv):
         return 0
     if len(argv) >= 2 and argv[1] == "launch-gpt":
         if cdp_main_page():
-            print("ChatGPT уже запущен с отладочным портом")
+            print("ChatGPT is already running with the debugging port")
             return 0
         return 0 if launch_chatgpt_with_port() else 1
     if len(argv) >= 3 and argv[1] == "open-gpt":

@@ -6,7 +6,7 @@ final class KeyPanel: NSPanel {
     override var canBecomeMain: Bool { true }
 }
 
-/// Плашка в стиле Spotlight: не активирует приложение, закрывается при потере фокуса.
+/// Spotlight-style panel: does not activate the app and hides when it loses focus.
 @MainActor
 final class PanelController: NSObject, NSWindowDelegate {
     private let panel: KeyPanel

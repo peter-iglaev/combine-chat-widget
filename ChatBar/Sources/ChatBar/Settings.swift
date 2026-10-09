@@ -19,7 +19,7 @@ final class SettingsModel: ObservableObject {
         onRecordingChange?(true)
         monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] e in
             guard let self else { return e }
-            if e.keyCode == 53 { self.stopRecording(); return nil } // Esc отменяет
+            if e.keyCode == 53 { self.stopRecording(); return nil } // Esc cancels
             guard let s = Shortcut(event: e) else {
                 self.error = "Нужен хотя бы один модификатор: ⌘, ⌥ или ⌃"
                 return nil
@@ -62,28 +62,56 @@ final class SettingsModel: ObservableObject {
 
 struct SettingsView: View {
     @ObservedObject var model: SettingsModel
+    @ObservedObject var chatgpt = ChatGPTControl.shared
 
     var body: some View {
         Form {
-            LabeledContent("Хоткей") {
-                HStack {
-                    Button(model.recording ? "Нажмите сочетание…" : model.shortcut.display) {
-                        model.recording ? model.stopRecording() : model.startRecording()
+            Section("Хоткей") {
+                LabeledContent("Открыть список чатов") {
+                    HStack {
+                        Button(model.recording ? "Нажмите сочетание…" : model.shortcut.display) {
+                            model.recording ? model.stopRecording() : model.startRecording()
+                        }
+                        .frame(minWidth: 150)
+                        Button("Сбросить (⌘Y)") { model.resetToDefault() }
                     }
-                    .frame(minWidth: 160)
-                    Button("По умолчанию (⌘Y)") { model.resetToDefault() }
+                }
+                Toggle("Запускать ChatBar при входе в систему", isOn: Binding(
+                    get: { model.launchAtLogin },
+                    set: { model.setLaunchAtLogin($0) }
+                ))
+                if let err = model.error {
+                    Text(err).foregroundStyle(.red).font(.caption)
                 }
             }
-            Toggle("Запускать при входе в систему", isOn: Binding(
-                get: { model.launchAtLogin },
-                set: { model.setLaunchAtLogin($0) }
-            ))
-            if let err = model.error {
-                Text(err).foregroundStyle(.red).font(.caption)
+
+            Section {
+                LabeledContent("Статус") {
+                    HStack(spacing: 6) {
+                        Circle().fill(Color(nsColor: chatgpt.status.color)).frame(width: 8, height: 8)
+                        Text(chatgpt.status.label)
+                    }
+                }
+                HStack {
+                    Button(chatgpt.status == .notRunning ? "Запустить ChatGPT с портом" : "Перезапустить ChatGPT с портом") {
+                        chatgpt.relaunchWithPort()
+                    }
+                    .disabled(chatgpt.busy || chatgpt.status == .withPort)
+                    if chatgpt.busy { ProgressView().controlSize(.small) }
+                    Spacer()
+                    Button("Обновить статус") { chatgpt.refreshStatus() }
+                }
+            } header: {
+                Text("ChatGPT")
+            } footer: {
+                Text("Обычные чаты ChatGPT открываются по ID только когда ChatGPT запущен с отладочным портом "
+                     + "(127.0.0.1:9333). Codex и Work работают и без него.")
+                    .font(.caption).foregroundStyle(.secondary)
             }
         }
         .formStyle(.grouped)
-        .frame(width: 440)
+        .frame(width: 520)
         .fixedSize()
+        .onAppear { chatgpt.refreshStatus() }
     }
 }

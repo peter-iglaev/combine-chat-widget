@@ -23,7 +23,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self.updateMenuTitle(ok ? s : self.settings.shortcut)
             return ok
         }
-        // Пока записываем новое сочетание, старое не должно открывать плашку.
+        // While recording a new shortcut, the old one must not open the panel.
         settings.onRecordingChange = { [weak self] recording in
             guard let self else { return }
             if recording { self.hotKey.unregister() } else { self.hotKey.register(self.settings.shortcut) }
@@ -35,6 +35,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         openItem = NSMenuItem(title: "", action: #selector(showPanel), keyEquivalent: "")
         menu.addItem(openItem)
         menu.addItem(NSMenuItem(title: "Обновить список", action: #selector(refresh), keyEquivalent: "r"))
+        menu.addItem(NSMenuItem(title: "Перезапустить ChatGPT с портом", action: #selector(relaunchChatGPT), keyEquivalent: ""))
         menu.addItem(.separator())
         menu.addItem(NSMenuItem(title: "Настройки…", action: #selector(showSettings), keyEquivalent: ","))
         menu.addItem(NSMenuItem(title: "Выйти из ChatBar", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
@@ -52,6 +53,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func showPanel() { panel.show() }
 
     @objc private func refresh() { store.refresh() }
+
+    @objc private func relaunchChatGPT() { ChatGPTControl.shared.relaunchWithPort() }
 
     @objc private func showSettings() {
         if settingsWindow == nil {
