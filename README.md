@@ -6,13 +6,17 @@ The list is built from the apps' local data only. ChatBar makes no network reque
 
 ## Install
 
-1. Download `ChatBar-<version>.dmg` from [Releases](../../releases) (Apple Silicon only).
-2. Open the DMG and drag **ChatBar** into **Applications**.
-3. The build is not notarized, so macOS blocks the first launch. Either right-click ChatBar → **Open** → **Open**, or run:
-   ```bash
-   xattr -dr com.apple.quarantine /Applications/ChatBar.app
-   ```
-4. A 💬 icon appears in the menu bar. Press **⌘Y**.
+Run in Terminal (Apple Silicon only):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/peter-iglaev/combine-chat-widget/main/install.sh | bash
+```
+
+The script downloads the latest DMG from [Releases](../../releases), verifies its SHA-256, installs ChatBar into `/Applications` and launches it. Run the same command to update.
+
+A 💬 icon appears in the menu bar. Press **⌘Y**.
+
+> **Why a script and not just the DMG?** ChatBar is not signed with an Apple Developer ID, so macOS rejects it when it comes from a browser download (Gatekeeper quarantine): the app won't launch normally and is hidden from Spotlight. Files fetched with `curl` are not quarantined, so the script install works out of the box.
 
 ## Usage
 
@@ -68,7 +72,7 @@ Requires Xcode (Swift 6) on Apple Silicon.
 
 ```bash
 ./scripts/build.sh      # build/ChatBar.app with embedded Python and collector
-./scripts/make-dmg.sh   # build/ChatBar-<version>.dmg
+./scripts/make-dmg.sh   # build/ChatBar-<version>.dmg and .sha256
 ```
 
 Pushing a `v*` tag runs `.github/workflows/release.yml`, which builds the DMG and attaches it to a GitHub release.
@@ -85,4 +89,4 @@ $APP/python/bin/python3 -I -B $APP/collector/chatbar.py list
 - Claude cloud chats appear only if they were opened on this Mac.
 - Without the debugging port, ChatGPT shows only what the app last cached (~40 recent + pinned).
 - Everything relies on undocumented internals of Claude and ChatGPT; an app update can break a source.
-- Apple Silicon only; the build is unsigned and not notarized.
+- Apple Silicon only; the build is ad-hoc signed and not notarized (install via the script above).

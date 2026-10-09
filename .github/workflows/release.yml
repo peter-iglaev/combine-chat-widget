@@ -33,13 +33,13 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ChatBar-${{ env.CHATBAR_VERSION }}
-          path: build/ChatBar-*.dmg
+          path: build/ChatBar-*.dmg*
 
       - name: Publish release
         if: github.ref_type == 'tag'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" build/ChatBar-*.dmg \
+          gh release create "$GITHUB_REF_NAME" build/ChatBar-*.dmg build/ChatBar-*.dmg.sha256 \
             --title "ChatBar $GITHUB_REF_NAME" \
-            --notes "Unsigned build for Apple Silicon. See README for first-launch instructions."
+            --notes "Apple Silicon. Install with: curl -fsSL https://raw.githubusercontent.com/peter-iglaev/combine-chat-widget/main/install.sh | bash"

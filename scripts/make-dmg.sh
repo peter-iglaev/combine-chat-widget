@@ -1,5 +1,5 @@
 #!/bin/zsh
-# Packs build/ChatBar.app into build/ChatBar-<version>.dmg with an Applications shortcut.
+# Packs build/ChatBar.app into build/ChatBar-<version>.dmg (+ .sha256) with an Applications shortcut.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -15,4 +15,5 @@ ln -s /Applications "$STAGE/Applications"
 rm -f "$DMG"
 hdiutil create -volname "ChatBar" -srcfolder "$STAGE" -fs HFS+ -format UDZO -ov "$DMG" >/dev/null
 rm -rf "$STAGE"
+(cd "$(dirname "$DMG")" && shasum -a 256 "$(basename "$DMG")" > "$(basename "$DMG").sha256")
 echo "Done: $DMG"
